@@ -160,6 +160,15 @@ async def gather_all_cidrs():
     filtered_v6 = remove_overlapping_networks(all_v6)
     return filtered_v4, filtered_v6
 
+def write_cidrs_to_json(v4cidrs, v6cidrs, filename="cidrs.json"):
+    data = {
+        "ipv4": v4cidrs,
+        "ipv6": v6cidrs
+    }
+    with open(filename, "w") as f:
+        json.dump(data, f, indent=2)
+    print(f"Wrote {len(v4cidrs)} IPv4 and {len(v6cidrs)} IPv6 CIDRs to {filename}")
+
 async def main():
     print("Fetching CIDR lists...")
     v4cidrs, v6cidrs = await gather_all_cidrs()
@@ -167,9 +176,10 @@ async def main():
     update_nftables_sets(v4cidrs, v6cidrs)
     print("nftables sets crimeFlare4 and crimeFlare6 updated.")
 
-if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except Exception as e:
-        print(f"Fatal error: {e}", file=sys.stderr)
-        sys.exit(1)
+async def main():
+    print("Fetching CIDR lists...")
+    v4cidrs, v6cidrs = await gather_all_cidrs()
+    write_cidrs_to_json(v4cidrs, v6cidrs)  # <-- Add this line
+    print("Updating nftables sets (requires root)...")
+    update_nftables_sets(v4cidrs, v6cidrs)
+    print("nftables sets crimeFlare4 and crimeFlare6 updated.")
