@@ -31,11 +31,13 @@ This project aims to contribute to the decentralisation of the Fediverse by expo
 To run this project, ensure you have Python 3.12 installed in a Miniconda environment. You may also need to install the required dependencies.
 
 ```bash
-conda create -n domain_analysis python=3.12
-conda activate domain_analysis
-pip install -r requirements.txt
+conda create -n domain_analysis python=3.12 && \
+    conda activate domain_analysis && \
+    pip install -r requirements.txt
 ```
   
+Or simply run `./setup_conda.sh` :)
+
 ### Usage
 
 You can run the script using the following command:
