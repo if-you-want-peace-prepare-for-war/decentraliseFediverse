@@ -1,0 +1,5 @@
+aiohttp
+ipaddress; python_version < "3.3"
+ansibleguy-nftables
+colorama
+aiohttp_socks

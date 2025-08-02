@@ -14,6 +14,7 @@ import asyncio
 import ipaddress
 import json
 import argparse
+import re
 import sys
 import socket
 import os
@@ -22,7 +23,7 @@ import aiohttp_socks
 from colorama import Fore, Style, init
 
 
-__version__ = "1.3.2"
+__version__ = "1.3.3"
 
 # Initialize colorama for cross-platform color support
 init()
@@ -32,7 +33,6 @@ async def fetch_json(session, url):
     try:
         async with session.get(url) as response:
             response.raise_for_status()
-            # Force JSON parsing regardless of Content-Type header
             return await response.json(content_type=None)
     except aiohttp.ClientError as e:
         print(f"Error fetching {url}: {e}")
@@ -88,10 +88,26 @@ async def get_google_cidrs(session):
         return cidrs
     return []
 
+async def get_latest_msft_servicetags_url(session):
+    """Scrape the Microsoft download page for the latest ServiceTags_Public JSON direct link."""
+    page_url = "https://www.microsoft.com/en-my/download/details.aspx?id=56519"
+    html = await fetch_text(session, page_url)
+    if not html:
+        print("Could not fetch Microsoft download page.")
+        return None
+    # Regex for ServiceTags_Public_YYYYMMDD.json URL
+    match = re.search(r"https:\/\/download\.microsoft\.com\/download\/[^\"]*ServiceTags_Public_\d+\.json", html)
+    if match:
+        return match.group(0)
+    print("Could not find ServiceTags_Public JSON link in Microsoft download page.")
+    return None
+
 async def get_microsoft_cidrs(session):
-    """Fetch Microsoft CIDRs (Azure and public hosting)."""
-    url = "https://download.microsoft.com/download/7/1/d/71d86715-5596-4529-9b13-da13a5de5b63/ServiceTags_Public_20250421.json"
-    data = await fetch_json(session, url)
+    """Fetch Microsoft CIDRs dynamically from the latest ServiceTags_Public JSON."""
+    json_url = await get_latest_msft_servicetags_url(session)
+    if not json_url:
+        return []
+    data = await fetch_json(session, json_url)
     if data:
         cidrs = [
             prefix
